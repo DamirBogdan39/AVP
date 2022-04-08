@@ -7,9 +7,11 @@ View(data)
 
 #Selekcija potrebnih kolona
 data <- subset(data, select = c(GODINA, ID, BROJ_LAB_PROTOKOLA, POL,
-                                GODINA_RO–ENJA, MESTO_PACIJENTA, 
+                                GODINA_ROƒêENJA, MESTO_PACIJENTA, 
                                 USTANOVA_POSILJALAC_UZORKA, TRAJANJE_VAKCINACIJE,
-                                RAZLIKA_ZAVRäETKA_I_BUSTERA, 
+                                RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA,
+                                RAZLIKA_POCETKA_VAK_I_ISPITIVANJA,
+                                RAZLIKA_ZAVR≈†ETKA_I_BUSTERA, 
                                 RAZLIKA_PRIJEMA_I_UZORKOVANJA, 
                                 RAZLIKA_PRIJEMA_I_POCETKA,
                                 RAZLIKA_UZORKOVANJA_I_POCETKA,
@@ -17,23 +19,26 @@ data <- subset(data, select = c(GODINA, ID, BROJ_LAB_PROTOKOLA, POL,
                                 NAPOMENA,REZULTAT_ANALIZE,USPESNO_IMUNIZOVAN, 
                                 DAT_SERUM,BROJ_JEDINICA,SERIJA_SERUMA,
                                 LOT_VAKCINE,LOKACIJA_OZLEDA,BROJ_OZLEDA,
-                                éIVOTINJA))
+                                ≈ΩIVOTINJA))
 
-#Uklanjanje redova sa nedostajucim podacima na zavisnim varijablama
+#Uklanjanje pacijenata sa neodgovarajucim lotom vakcina
 
-library(tidyr)
+library(stringr)
+library(dplyr)
 
-paste("Broj nedostajucih u varijabli REZULTAT_ANALIZE:",
-      sum(is.na(data$REZULTAT_ANALIZE)))
+# Selekcija ispitanikakojima lot vakcine ne sadrzi , ; \\?
 
-#Uklanjanje reda sa nedostajucim podatkom u REZULTAT_ANALIZE varijabli
-data <- data %>% drop_na(REZULTAT_ANALIZE)
+unique(data$LOT_VAKCINE) 
 
-paste("Broj nedostajucih u varijabli REZULTAT_ANALIZE:", 
-      sum(is.na(data$REZULTAT_ANALIZE)))
+d <- data[!grepl(',', data$LOT_VAKCINE),]
 
-paste("Broj nedostajucih u varijabli USPESNO_IMUNIZOVAN:",
-      sum(is.na(data$USPESNO_IMUNIZOVAN)))
+d <- d[!grepl(';', d$LOT_VAKCINE),]
+
+d <- d[!grepl('\\?', d$LOT_VAKCINE),]
+
+unique(d$LOT_VAKCINE) 
+
+#31 pacijent je primio dva ili vise razilicitih lotova vakcina!
 
 # APPLY da primenimo jednu funkciju na sve kolone u DF
 
@@ -52,21 +57,6 @@ data_q <-  data[grep("\\?", data$LOT_VAKCINE),]
 
 data_nelot <- rbind(data_c, data_d, data_q)
 View(data_nelot)
-  
-#Uklanjanje pacijenata sa neodgovarajucim lotom vakcina
-
-library(stringr)
-library(dplyr)
-
-d <- data[!grepl(',', data$LOT_VAKCINE),]
-
-d <- d[!grepl(';', d$LOT_VAKCINE),]
-
-d <- d[!grepl('\\?', d$LOT_VAKCINE),]
-
-#31 pacijent je primio dva ili vise razilicitih lotova vakcina!
-
-unique(d$LOT_VAKCINE) 
 
 #PRECISCAVANJE NUMERICKIH VARIJABLI KOJE OZNACAVANJU TRAJANJE
 
@@ -78,13 +68,14 @@ d$TRAJANJE_VAKCINACIJE <- replace(d$TRAJANJE_VAKCINACIJE,
 unique(d$TRAJANJE_VAKCINACIJE)
 range(d$TRAJANJE_VAKCINACIJE, na.rm=TRUE)
 
-#Zamena negativnih sa NA na varijabli RAZLIKA_ZAVRäETKA_I_BUSTERA
+#Zamena negativnih sa NA na varijabli RAZLIKA_ZAVR≈†ETKA_I_BUSTERA
 
-d$RAZLIKA_ZAVRäETKA_I_BUSTERA <- replace(d$RAZLIKA_ZAVRäETKA_I_BUSTERA, 
-                                       which(d$RAZLIKA_ZAVRäETKA_I_BUSTERA < 0),
+d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA <- replace(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA, 
+                                       which(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA < 0),
                                        NA)
-unique(d$RAZLIKA_ZAVRäETKA_I_BUSTERA)
+unique(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)
 
+range(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA, na.rm=TRUE)
 #Zamena negativnih sa NA na varijabli RAZLIKA_PRIJEMA_I_UZORKOVANJA
 
 
@@ -107,6 +98,22 @@ d$RAZLIKA_UZORKOVANJA_I_POCETKA <- replace(d$RAZLIKA_UZORKOVANJA_I_POCETKA,
                                     which(d$RAZLIKA_UZORKOVANJA_I_POCETKA < 0),
                                        NA)
 unique(d$RAZLIKA_UZORKOVANJA_I_POCETKA)
+
+#Zamena negativnih sa NA na varijabli RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA <- 
+            replace(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA, 
+            which(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA < 0),NA)
+unique(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)
+range(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA, na.rm = TRUE)
+
+#Zamena negativnih sa NA na varijabli RAZLIKA_POCETKA_VAK_I_ISPITIVANJA
+
+d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA <- 
+                  replace(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA, 
+                 which(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA < 0),NA)
+unique(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)
+range(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA, na.rm = TRUE)
 
 #Zamena neodgovarajucih vrednosti sa NA na varijabli BROJ_JEDINICA
 unique(d$BROJ_JEDINICA)
@@ -140,7 +147,7 @@ d$LOKACIJA_OZLEDA <- replace(d$LOKACIJA_OZLEDA,
                              which(d$LOKACIJA_OZLEDA =="USNA"), "USNE")
                          
 d$LOKACIJA_OZLEDA <- replace(d$LOKACIJA_OZLEDA,
-                             which(d$LOKACIJA_OZLEDA == "NATKOLENIC??" |
+                             which(d$LOKACIJA_OZLEDA == "NATKOLENIC–ê" |
                                      d$LOKACIJA_OZLEDA == "NATKOLENICA"
                                      ), "NATKOLENICE")
 
@@ -151,7 +158,7 @@ d$LOKACIJA_OZLEDA <- replace(d$LOKACIJA_OZLEDA,
                              which(d$LOKACIJA_OZLEDA =="OBVA"), "OBRVA")
 
 d$LOKACIJA_OZLEDA <- replace(d$LOKACIJA_OZLEDA,
-                             which(d$LOKACIJA_OZLEDA =="äAKA"), "äAKE")
+                             which(d$LOKACIJA_OZLEDA =="≈†AKA"), "≈†AKE")
 
 d$LOKACIJA_OZLEDA <- replace(d$LOKACIJA_OZLEDA,
                              which(d$LOKACIJA_OZLEDA =="PODLAKTICA"), 
@@ -177,37 +184,101 @@ d$BROJ_OZLEDA <- replace(d$BROJ_OZLEDA,
                            NA)
 unique(d$BROJ_OZLEDA)
 
-#Zamena neodgovarajucih vrednosti sa NA na varijabli éIVOTINJA
+#Zamena neodgovarajucih vrednosti sa NA na varijabli ≈ΩIVOTINJA
 
-unique(d$éIVOTINJA)
+unique(d$≈ΩIVOTINJA)
 
 #Pogresne unose macke u ispravne
 
-d$éIVOTINJA <- replace(d$éIVOTINJA, which(d$éIVOTINJA == 'MA»AK' | 
-                    d$éIVOTINJA == 'MA;KA'), 'MA»KA') 
+d$≈ΩIVOTINJA <- replace(d$≈ΩIVOTINJA, which(d$≈ΩIVOTINJA == 'MAƒåAK' | 
+                    d$≈ΩIVOTINJA == 'MA;KA'), 'MAƒåKA') 
 
 #Neodgovarajuce unose u NA
 
-d$éIVOTINJA <- replace(d$éIVOTINJA, which(d$éIVOTINJA == 'NEPOZNATO' | 
-                                            d$éIVOTINJA == '/'), NA)
+d$≈ΩIVOTINJA <- replace(d$≈ΩIVOTINJA, which(d$≈ΩIVOTINJA == 'NEPOZNATO' | 
+                                            d$≈ΩIVOTINJA == '/'), NA)
 
 #Pogresan unos slepog misa u ispravan
 
-d$éIVOTINJA <- replace(d$éIVOTINJA, which(d$éIVOTINJA == 'WSLEPI MIä'), 
-                       'SLEPI MIä') 
+d$≈ΩIVOTINJA <- replace(d$≈ΩIVOTINJA, which(d$≈ΩIVOTINJA == 'WSLEPI MI≈†'), 
+                       'SLEPI MI≈†') 
 
 #Pogresan unos divlje svinje u ispravan
 
-d$éIVOTINJA <- replace(d$éIVOTINJA, which(d$éIVOTINJA == 'DIVLJA SVINA'), 
+d$≈ΩIVOTINJA <- replace(d$≈ΩIVOTINJA, which(d$≈ΩIVOTINJA == 'DIVLJA SVINA'), 
                        'DIVLJA SVINJA')
 
 
+#Uklanjanje redova sa nedostajucim podacima na zavisnim varijablama
+
+library(tidyr)
+
+paste("Broj nedostajucih u varijabli REZULTAT_ANALIZE:",
+      sum(is.na(d$REZULTAT_ANALIZE)))
+
+#Uklanjanje reda sa nedostajucim podatkom u REZULTAT_ANALIZE varijabli
+
+d <- d %>% drop_na(REZULTAT_ANALIZE)
+
+paste("Broj nedostajucih u varijabli REZULTAT_ANALIZE:", 
+      sum(is.na(d$REZULTAT_ANALIZE)))
+
+paste("Broj nedostajucih u varijabli USPESNO_IMUNIZOVAN:",
+      sum(is.na(d$USPESNO_IMUNIZOVAN)))
+
+#Funkcija remove_outrliers() koja za cilj ima ukljanjanje aberantnih rezultata
+
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+#Uklanjanje outliera na numeriƒçkim varijablama
+
+sum(is.na(d$GODINA_ROƒêENJA))
+d$GODINA_ROƒêENJA <- remove_outliers(d$GODINA_ROƒêENJA)
+
+sum(is.na(d$TRAJANJE_VAKCINACIJE))
+d$TRAJANJE_VAKCINACIJE <- remove_outliers(d$TRAJANJE_VAKCINACIJE)
+
+sum(is.na(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA))
+d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA <- remove_outliers(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)
+
+sum(is.na(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA))
+d$RAZLIKA_PRIJEMA_I_UZORKOVANJA <- 
+  remove_outliers(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA)
+
+sum(is.na(d$RAZLIKA_PRIJEMA_I_POCETKA))
+d$RAZLIKA_PRIJEMA_I_POCETKA <- remove_outliers(d$RAZLIKA_PRIJEMA_I_POCETKA)
+
+sum(is.na(d$RAZLIKA_UZORKOVANJA_I_POCETKA))
+d$RAZLIKA_UZORKOVANJA_I_POCETKA <- 
+  remove_outliers(d$RAZLIKA_UZORKOVANJA_I_POCETKA)
+
+sum(is.na(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA))
+d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA <- 
+  remove_outliers(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)
+
+sum(is.na(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA))
+d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA <- 
+  remove_outliers(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)
+
+sum(is.na(d$BROJ_JEDINICA))
+d$BROJ_JEDINICA <- as.numeric(d$BROJ_JEDINICA)
+d$BROJ_JEDINICA <- remove_outliers(d$BROJ_JEDINICA)
+
+#Pretvaranje varijable BROJ_OZLEDA u numeriƒçku
+
+d$BROJ_OZLEDA <- as.numeric(d$BROJ_OZLEDA)
+
 ###Vizualizacija varijabli###
 
-library(ggplot2)
 library(psych)
 describe(d)
-
 
 #Vizuelni prikaz variajble pol na uzorku
 
@@ -226,18 +297,19 @@ table(d$GODINA)
 ggplot(d, aes(x=GODINA)) + geom_bar() + 
   ggtitle('Prikaz varijable godina na uzorku') + xlab('Godina') + ylab('Broj')
 
-#Prikaz varijable GODINA_RO–ENJA
+#Prikaz varijable GODINA_ROƒêENJA
 
-table(d$GODINA_RO–ENJA)
+table(d$GODINA_ROƒêENJA)
 
 d %>%
-  filter(!is.na(GODINA_RO–ENJA)) %>%
-  ggplot(aes(x= GODINA_RO–ENJA)) + 
+  filter(!is.na(GODINA_ROƒêENJA)) %>%
+  ggplot(aes(x= GODINA_ROƒêENJA)) + 
   geom_histogram(binwidth = 1, color = 'white') + 
-  ggtitle('Histogram godina roenja pacijenata') + xlab('Godina') + 
+  ggtitle('Histogram godina roƒëenja pacijenata') + xlab('Godina') + 
   ylab('Frekvencija')
 
-ks.test(d$GODINA_RO–ENJA, 'pnorm')
+
+shapiro.test(d$GODINA_ROƒêENJA)
 
 #Prikaz varijable USTANOVA_POSILJALAC_UZORKA
 
@@ -246,55 +318,76 @@ table(d$USTANOVA_POSILJALAC_UZORKA)
 d %>%
   filter(!is.na(USTANOVA_POSILJALAC_UZORKA)) %>%
   ggplot(aes(y= USTANOVA_POSILJALAC_UZORKA)) +
-  geom_bar() + ggtitle('Prikaz varijable ustanove poöiljalca uzorka') + xlab('Frekvencija') +
-  ylab('Ustanova poöiljalac uzorka')
+  geom_bar() + ggtitle('Prikaz varijable ustanove po≈°iljalca uzorka') + xlab('Frekvencija') +
+  ylab('Ustanova po≈°iljalac uzorka')
 
 #Prikaz varijable TRAJANJE_VAKCINACIJE
 
 d %>%
   filter(!is.na(TRAJANJE_VAKCINACIJE)) %>% 
-  #filter(TRAJANJE_VAKCINACIJE < 100) %>% 
-  ggplot(aes(x= remove_outliers(TRAJANJE_VAKCINACIJE))) + 
+  ggplot(aes(x= TRAJANJE_VAKCINACIJE)) + 
   geom_histogram(bins=10) + 
   ggtitle('Trajanje vakcinacije') + xlab('Trajanje vakcinacije (dani)') + 
   ylab('Frekvencija')
 
-ks.test(d$TRAJANJE_VAKCINACIJE, 'pnorm')
+shapiro.test(d$TRAJANJE_VAKCINACIJE)
 
-#Prikaz varijable RAZLIKA_ZAVRäETKA_I_BUSTERA
+#Prikaz varijable RAZLIKA_ZAVR≈†ETKA_I_BUSTERA
 
 d %>%
-  filter(!is.na(RAZLIKA_ZAVRäETKA_I_BUSTERA)) %>% 
-  ggplot(aes(x= RAZLIKA_ZAVRäETKA_I_BUSTERA)) + 
+  filter(!is.na(RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)) %>% 
+  ggplot(aes(x= RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)) + 
   geom_histogram(bins=10) + 
   ggtitle('Razlika zavrsetka vakcinacije i buster doze') + xlab('Razlika (dani)') + 
   ylab('Frekvencija')
 
-ks.test(d$RAZLIKA_ZAVRäETKA_I_BUSTERA, 'pnorm')
+shapiro.test(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)
 
 #Prikaz varijable RAZLIKA_PRIJEMA_I_UZORKOVANJA
 
 d %>%
   filter(!is.na(RAZLIKA_PRIJEMA_I_UZORKOVANJA)) %>% 
-  filter(RAZLIKA_PRIJEMA_I_UZORKOVANJA < 100) %>% 
   ggplot(aes(x= RAZLIKA_PRIJEMA_I_UZORKOVANJA)) + 
   geom_histogram(bins=10) + 
   ggtitle('Razlika prijema i uzorkovanja') + xlab('Razlika (dani)') + 
   ylab('Frekvencija')
 
-ks.test(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA, 'pnorm')
+shapiro.test(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA)
 
 #Prikaz varijable RAZLIKA_UZORKOVANJA_I_POCETKA
 
 d %>%
   filter(!is.na(RAZLIKA_UZORKOVANJA_I_POCETKA)) %>% 
-  filter(RAZLIKA_UZORKOVANJA_I_POCETKA < 100) %>% 
   ggplot(aes(x= RAZLIKA_UZORKOVANJA_I_POCETKA)) + 
   geom_histogram(bins=10) + 
-  ggtitle('Razlika uzorkovanja i pocetka') + xlab('Razlika (dani)') + 
+  ggtitle('Razlika uzorkovanja i poƒçetka') + xlab('Razlika (dani)') + 
   ylab('Frekvencija')
 
-ks.test(d$RAZLIKA_UZORKOVANJA_I_POCETKA, 'pnorm')
+shapiro.test(d$RAZLIKA_UZORKOVANJA_I_POCETKA)
+
+#Prikaz varijable RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+d %>%
+  filter(!is.na(RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)) %>% 
+  ggplot(aes(x= RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)) + 
+  geom_histogram(bins=10) + 
+  ggtitle('Razlika zavr≈°etka vakcinacije i poƒçetka analize') + 
+  xlab('Razlika (dani)') + 
+  ylab('Frekvencija')
+
+shapiro.test(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)
+
+#Prikaz varijable RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+d %>%
+  filter(!is.na(RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)) %>% 
+  ggplot(aes(x= RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)) + 
+  geom_histogram(bins=10) + 
+  ggtitle('Razlika poƒçetka vakcinacije i poƒçetka analize') + 
+  xlab('Razlika (dani)') + 
+  ylab('Frekvencija')
+
+shapiro.test(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)
 
 # Prikaz varijable UKUPNO_DANA_OD_VADJENJA_KRVI
 
@@ -304,10 +397,10 @@ d %>%
   filter(!is.na(UKUPNO_DANA_OD_VADJENJA_KRVI)) %>% 
   ggplot(aes(x= UKUPNO_DANA_OD_VADJENJA_KRVI)) + 
   geom_histogram(bins=10) + 
-  ggtitle('Ukupno dana od vaenja krvi') + xlab('Dani') + 
+  ggtitle('Ukupno dana od vaƒëenja krvi') + xlab('Dani') + 
   ylab('Frekvencija')
 
-ks.test(d$UKUPNO_DANA_OD_VADJENJA_KRVI, 'pnorm')
+shapiro.test(d$UKUPNO_DANA_OD_VADJENJA_KRVI)
 
 #Prikaz varijable REZULTAT_ANALIZE
 d %>% 
@@ -321,13 +414,12 @@ describe(d$REZULTAT_ANALIZE)
 #Prikaz varijable USPESNO_IMUNIZOVAN
 
 ggplot(d, aes(x=USPESNO_IMUNIZOVAN)) + geom_bar() + 
-  ggtitle('Uspeönost imunizacije') + xlab('Uspeöno imunizovan') + 
+  ggtitle('Uspe≈°nost imunizacije') + xlab('Uspe≈°no imunizovan') + 
   ylab('Frekvencija')
 
 table(d$USPESNO_IMUNIZOVAN)
 
 #Prikaz varijable DAT_SERUM
-
 
 d %>%
   filter(!is.na(DAT_SERUM)) %>% 
@@ -344,13 +436,13 @@ sum(is.na(d$BROJ_JEDINICA))
 
 d %>%
   filter(!is.na(BROJ_JEDINICA)) %>% 
-  filter(as.numeric(BROJ_JEDINICA) < 5000) %>% 
   ggplot(aes(x= as.numeric(BROJ_JEDINICA))) + 
   geom_histogram(bins=30) + 
   ggtitle('Broj jedinica') + xlab('Broj jedinica') + 
   ylab('Frekvencija')
 
-ks.test(as.numeric(d$BROJ_JEDINICA), 'pnorm')
+
+shapiro.test(d$BROJ_JEDINICA)
 
 #Prikaz varijable SERIJA_SERUMA
 
@@ -361,6 +453,13 @@ table(d$SERIJA_SERUMA)
 sum(is.na(d$LOKACIJA_OZLEDA))
 
 table(d$LOKACIJA_OZLEDA)
+
+d %>%
+  filter(!is.na(LOKACIJA_OZLEDA)) %>%
+  ggplot(aes(y= LOKACIJA_OZLEDA)) +
+  geom_bar() + ggtitle('Prikaz varijable ustanove po≈°iljalca uzorka') + 
+  xlab('Frekvencija') +
+  ylab('Ustanova po≈°iljalac uzorka')
 
 #Prikaz varijable BROJ_OZLEDA
 
@@ -375,17 +474,17 @@ d %>%
   ggtitle('Prikaz broja ozleda') + xlab('Broj ozleda') + 
   ylab('Frekvencija')
 
-#Prikaz varijable éIVOTINJA
+#Prikaz varijable ≈ΩIVOTINJA
 
-sum(is.na(d$éIVOTINJA))
+sum(is.na(d$≈ΩIVOTINJA))
 
-table(d$éIVOTINJA)
+table(d$≈ΩIVOTINJA)
 
 d %>%
-  filter(!is.na(éIVOTINJA)) %>% 
-  ggplot(aes(x= éIVOTINJA)) + 
+  filter(!is.na(≈ΩIVOTINJA)) %>% 
+  ggplot(aes(y= ≈ΩIVOTINJA)) + 
   geom_bar() + 
-  ggtitle('Broj ozleda nastao od odreenih ûivotinja') + xlab('éivotinja') + 
+  ggtitle('Broj ozleda nastao od odreƒëenih ≈æivotinja') + xlab('≈Ωivotinja') + 
   ylab('Frekvencija')
 
 #Analiza pojedinacnih nezavisnih varijabli sa zavisnim
@@ -399,19 +498,19 @@ chisq.test(d$POL, d$USPESNO_IMUNIZOVAN, correct=FALSE)
 d %>% 
   filter(!is.na(POL)) %>% 
   ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=POL)) +
-  geom_bar() + ggtitle('Odnos pola i uspeönosti imunizacije') +
-  xlab('Uspeöno imunizovan') + ylab('Frekvencija') +
+  geom_bar() + ggtitle('Odnos pola i uspe≈°nosti imunizacije') +
+  xlab('Uspe≈°no imunizovan') + ylab('Frekvencija') +
   scale_fill_discrete('Pol')
 
-# USPESNO_IMUNIZOVAN i GODINA_RO–ENJA
+# USPESNO_IMUNIZOVAN i GODINA_ROƒêENJA
 
-t.test(d$GODINA_RO–ENJA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$GODINA_ROƒêENJA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
-  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=GODINA_RO–ENJA)) +
-  geom_boxplot(outlier.shape = NA) + ggtitle('Uspeönost imunizacije u odnosu na godinu roenja') + 
-  xlab('Uspeöno imunizovan') +
-  ylab('Godina roenja') + 
+  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=GODINA_ROƒêENJA)) +
+  geom_boxplot(outlier.shape = NA) + ggtitle('Uspe≈°nost imunizacije u odnosu na godinu roƒëenja') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Godina roƒëenja') + 
   annotate(geom="text", x=1.5, y=2010, label="p < 0.01 **")
 
 # USPESNO_IMUNIZOVAN i USTANOVA_POSILJALAC_UZORKA
@@ -423,88 +522,108 @@ chisq.test(d$USTANOVA_POSILJALAC_UZORKA, d$USPESNO_IMUNIZOVAN, correct=TRUE)
 d %>% 
   filter(!is.na(USTANOVA_POSILJALAC_UZORKA)) %>% 
   ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=USTANOVA_POSILJALAC_UZORKA)) +
-  geom_bar() + ggtitle('Uspeönost imunizacije u odnosu na ustanovu') +
-  xlab('Uspeöno imunizovan') + ylab('Frekvencija') +
+  geom_bar() + ggtitle('Uspe≈°nost imunizacije u odnosu na ustanovu') +
+  xlab('Uspe≈°no imunizovan') + ylab('Frekvencija') +
   scale_fill_discrete('Ustanova')
 
 # USPESNO_IMUNIZOVAN i TRAJANJE_VAKCINACIJE
 
-t.test(d$TRAJANJE_VAKCINACIJE ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$TRAJANJE_VAKCINACIJE ~ d$USPESNO_IMUNIZOVAN)
+
 
 d %>%
   filter(!is.na(TRAJANJE_VAKCINACIJE)) %>%
-  filter(TRAJANJE_VAKCINACIJE < 1000) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=TRAJANJE_VAKCINACIJE)) +
-  geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu na trajanje vakcinacije') + 
-  xlab('Uspeöno imunizovan') +
-  ylab('Trajanje vakcinacije (dani)')
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu na trajanje vakcinacije') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Trajanje vakcinacije (dani)') 
 
- 
 # USPESNO_IMUNIZOVAN i RAzLIKA_ZAVRSETKA_I_BUSTERA 
 
-t.test(d$RAZLIKA_ZAVRäETKA_I_BUSTERA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
-  filter(!is.na(RAZLIKA_ZAVRäETKA_I_BUSTERA)) %>%
-  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_ZAVRäETKA_I_BUSTERA)) +
+  filter(!is.na(RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)) %>%
+  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)) +
   geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu vreme proteklo od zavröetka vakcinacije do buster doze') + 
-  xlab('Uspeöno imunizovan') +
-  ylab('Razlika zavröetka vakcinacije i buster doze (dani)')
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od zavr≈°etka vakcinacije do buster doze') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Razlika zavr≈°etka vakcinacije i buster doze (dani)')
 
 # USPESNO_IMUNIZOVAN i RAZLIKA_PRIJEMA_I_UZORKOVANJA
 
-t.test(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$RAZLIKA_PRIJEMA_I_UZORKOVANJA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
   filter(!is.na(RAZLIKA_PRIJEMA_I_UZORKOVANJA)) %>%
-  filter(RAZLIKA_PRIJEMA_I_UZORKOVANJA < 50) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_PRIJEMA_I_UZORKOVANJA)) +
-  geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu vreme proteklo od prijema do uzorkovanja') + 
-  xlab('Uspeöno imunizovan') +
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od prijema do uzorkovanja') + 
+  xlab('Uspe≈°no imunizovan') +
   ylab('Razlika prijema i uzorkovanja uzorka (dani)')
 
 # USPESNO_IMUNIZOVAN i RAZLIKA_PRIJEMA_I_POCETKA
 
-t.test(d$RAZLIKA_PRIJEMA_I_POCETKA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$RAZLIKA_PRIJEMA_I_POCETKA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
   filter(!is.na(RAZLIKA_PRIJEMA_I_POCETKA)) %>%
-  filter(RAZLIKA_PRIJEMA_I_POCETKA < 14) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_PRIJEMA_I_POCETKA)) +
   geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu vreme proteklo od prijema do poËetka analiza') + 
-  xlab('Uspeöno imunizovan') +
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od prijema do poƒçetka analiza') + 
+  xlab('Uspe≈°no imunizovan') +
   ylab('Razlika prijema i analize uzorka (dani)')
 
-# USPENO_IMUNIZOVAN i RAZLIKA_UZORKOVANJA_I_POCETKA
+# USPESNO_IMUNIZOVAN i RAZLIKA_UZORKOVANJA_I_POCETKA
 
-t.test(d$RAZLIKA_UZORKOVANJA_I_POCETKA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$RAZLIKA_UZORKOVANJA_I_POCETKA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
   filter(!is.na(RAZLIKA_UZORKOVANJA_I_POCETKA)) %>%
-  filter(RAZLIKA_UZORKOVANJA_I_POCETKA < 50) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_UZORKOVANJA_I_POCETKA)) +
-  geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu vreme proteklo od uzorkovanja do poËetka analize') + 
-  xlab('Uspeöno imunizovan') +
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od uzorkovanja do poƒçetka analize') + 
+  xlab('Uspe≈°no imunizovan') +
   ylab('Razlika uzorkovanja i analize uzorka (dani)')
+
+# USPESNO_IMUNIZOVAN i RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+wilcox.test(d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA ~ d$USPESNO_IMUNIZOVAN)
+
+d %>%
+  filter(!is.na(RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)) %>%
+  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)) +
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od zavr≈°etka vakcinacije do poƒçetka analize') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Razlika zavr≈°etka vakcinacije i poƒçetka analize (dani)')
+
+# USPESNO_IMUNIZOVAN i RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+wilcox.test(d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA ~ d$USPESNO_IMUNIZOVAN)
+
+d %>%
+  filter(!is.na(RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)) %>%
+  ggplot(aes(x= USPESNO_IMUNIZOVAN, y=RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)) +
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od poƒçetka vakcinacije do poƒçetka analize') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Razlika poƒçetka vakcinacije i poƒçetka analize (dani)')
 
 
 # USPESNO_IMUNIZOVAN i UKUPNO_DANA_OD_VADJENJA_KRVI
 
-t.test(d$UKUPNO_DANA_OD_VADJENJA_KRVI ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$UKUPNO_DANA_OD_VADJENJA_KRVI ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
   filter(!is.na(UKUPNO_DANA_OD_VADJENJA_KRVI)) %>%
-  filter(UKUPNO_DANA_OD_VADJENJA_KRVI < 20) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=UKUPNO_DANA_OD_VADJENJA_KRVI)) +
-  geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu vreme proteklo od vaenja krvi') + 
-  xlab('Uspeöno imunizovan') +
-  ylab('Ukupno dana od vaenja krvi')
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu vreme proteklo od vaƒëenja krvi') + 
+  xlab('Uspe≈°no imunizovan') +
+  ylab('Ukupno dana od vaƒëenja krvi') +
+  ylim(0,20)
 
 # USPESNO_IMUNIZOVAN i DAT_SERUM
 
@@ -515,24 +634,21 @@ chisq.test(d$DAT_SERUM, d$USPESNO_IMUNIZOVAN, correct=TRUE)
 d %>% 
   filter(!is.na(DAT_SERUM)) %>% 
   ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=DAT_SERUM)) +
-  geom_bar() + ggtitle('Uspeönost imunizacije u odnosu na davanje seruma') +
-  xlab('Uspeöno imunizovan') + ylab('Frekvencija') +
+  geom_bar() + ggtitle('Uspe≈°nost imunizacije u odnosu na davanje seruma') +
+  xlab('Uspe≈°no imunizovan') + ylab('Frekvencija') +
   scale_fill_discrete('Dat serum')
 
 
 # USPESNO_IMUNIZOVAN i BROJ JEDINICA
 
-d$BROJ_JEDINICA <- as.numeric(d$BROJ_JEDINICA)
-
-t.test(d$BROJ_JEDINICA ~ d$USPESNO_IMUNIZOVAN)
+wilcox.test(d$BROJ_JEDINICA ~ d$USPESNO_IMUNIZOVAN)
 
 d %>%
   filter(!is.na(BROJ_JEDINICA)) %>%
-  filter(BROJ_JEDINICA < 5000) %>% 
   ggplot(aes(x= USPESNO_IMUNIZOVAN, y=BROJ_JEDINICA)) +
-  geom_boxplot() + 
-  ggtitle('Uspeönost imunizacije u odnosu na broj jedinica') + 
-  xlab('Uspeöno imunizovan') +
+  geom_boxplot(outlier.shape = NA) + 
+  ggtitle('Uspe≈°nost imunizacije u odnosu na broj jedinica') + 
+  xlab('Uspe≈°no imunizovan') +
   ylab('Broj jedinica')
 
 # USPESNO_IMUNIZOVAN i LOKACIJA_OZLEDA
@@ -544,23 +660,23 @@ chisq.test(d$USPESNO_IMUNIZOVAN, d$LOKACIJA_OZLEDA, correct = TRUE)
 d %>% 
   filter(!is.na(LOKACIJA_OZLEDA)) %>% 
   ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=LOKACIJA_OZLEDA)) +
-  geom_bar() + ggtitle('Uspeönost imunizacije u odnosu na lokaciju ozlede') +
-  xlab('Uspeöno imunizovan') + ylab('Frekvencija') +
+  geom_bar() + ggtitle('Uspe≈°nost imunizacije u odnosu na lokaciju ozlede') +
+  xlab('Uspe≈°no imunizovan') + ylab('Frekvencija') +
   scale_fill_discrete('Lokacija ozleda')
 
 
-# USPESNO_IMUNIZOVAN i éIVOTINJA
+# USPESNO_IMUNIZOVAN i ≈ΩIVOTINJA
 
-table(d$USPESNO_IMUNIZOVAN, d$éIVOTINJA)
+table(d$USPESNO_IMUNIZOVAN, d$≈ΩIVOTINJA)
 
-chisq.test(d$USPESNO_IMUNIZOVAN, d$éIVOTINJA, correct = TRUE)
+chisq.test(d$USPESNO_IMUNIZOVAN, d$≈ΩIVOTINJA, correct = TRUE)
 
 d %>% 
-  filter(!is.na(éIVOTINJA)) %>% 
-  ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=éIVOTINJA)) +
-  geom_bar() + ggtitle('Uspeönost imunizacije u odnosu na ûivotinju') +
-  xlab('Uspeöno imunizovan') + ylab('Frekvencija') +
-  scale_fill_discrete('éivotinja')
+  filter(!is.na(≈ΩIVOTINJA)) %>% 
+  ggplot(aes(x=USPESNO_IMUNIZOVAN, fill=≈ΩIVOTINJA)) +
+  geom_bar() + ggtitle('Uspe≈°nost imunizacije u odnosu na ≈æivotinju') +
+  xlab('Uspe≈°no imunizovan') + ylab('Frekvencija') +
+  scale_fill_discrete('≈Ωivotinja')
 
 # REZULTAT_ANALIZE i GODINA
 
@@ -569,81 +685,80 @@ summary(aov(d$REZULTAT_ANALIZE ~ d$GODINA))
 d %>%
   filter(!is.na(GODINA)) %>% filter(REZULTAT_ANALIZE < 15) %>%
   ggplot(aes(x= as.factor(GODINA), y=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u odnosu na godinu') + 
   xlab('Godina') +
-  ylab('Rezultat analize')
+  ylab('Rezultat analize') +
+  ylim(0, 8)
 
 
 # REZULTAT_ANALIZE i POL
 
-t.test(d$REZULTAT_ANALIZE ~ d$POL)
+wilcox.test(d$REZULTAT_ANALIZE ~ d$POL)
 
 d %>%
   filter(!is.na(POL)) %>%
-  filter(REZULTAT_ANALIZE < 10) %>% 
   ggplot(aes(x= POL, y=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u odnosu na pol') + 
   xlab('Pol') +
-  ylab('Rezultat analize')
+  ylab('Rezultat analize') +
+  ylim(0,8)
 
 
-# REZULTAT_ANALIZE i GODINA_RO–ENJA
+# REZULTAT_ANALIZE i GODINA_ROƒêENJA
 
-cor.test(d$REZULTAT_ANALIZE, d$GODINA_RO–ENJA, method='pearson')
+cor.test(d$REZULTAT_ANALIZE, d$GODINA_ROƒêENJA, method='pearson')
 
 d %>%
-  filter(!is.na(GODINA_RO–ENJA)) %>%
+  filter(!is.na(GODINA_ROƒêENJA)) %>%
   filter(REZULTAT_ANALIZE < 15) %>% 
-  ggplot(aes(x= GODINA_RO–ENJA, y=REZULTAT_ANALIZE)) +
+  ggplot(aes(x= GODINA_ROƒêENJA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
-  ggtitle('Korelacija rezultata analize i godine roenja') + 
-  xlab('Godina roenja') +
+  ggtitle('Korelacija rezultata analize i godine roƒëenja') + 
+  xlab('Godina roƒëenja') +
   ylab('Rezultat analize')
 
 # REZULTAT_ANALIZE i USTANOVA_POSILJALAC_UZORKA
 
-kruskal.test(remove_outliers(d$REZULTAT_ANALIZE) ~ d$USTANOVA_POSILJALAC_UZORKA)
 kruskal.test(d$REZULTAT_ANALIZE ~ d$USTANOVA_POSILJALAC_UZORKA)
 
-pairwise.wilcox.test(remove_outliers(d$REZULTAT_ANALIZE), d$USTANOVA_POSILJALAC_UZORKA,
+pairwise.wilcox.test(d$REZULTAT_ANALIZE, d$USTANOVA_POSILJALAC_UZORKA,
                      p.adjust.method = "BH")
 
 
 d %>%
-  filter(!is.na(USTANOVA_POSILJALAC_UZORKA)) %>%
-  filter(REZULTAT_ANALIZE < 10) %>% 
+  #filter(!is.na(USTANOVA_POSILJALAC_UZORKA)) %>%
   ggplot(aes(y= USTANOVA_POSILJALAC_UZORKA, x=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u odnosu na ustanovu') + 
   xlab('Rezultat analize') +
-  ylab('Ustanova')
+  ylab('Ustanova') + 
+  xlim(0, 22.5)
 
 # REZULTAT_ANALIZE i TRAJANJE_VAKCINACIJE
+
 
 cor.test(d$REZULTAT_ANALIZE, d$TRAJANJE_VAKCINACIJE, method='pearson')
 
 d %>%
   filter(!is.na(TRAJANJE_VAKCINACIJE)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% filter(TRAJANJE_VAKCINACIJE < 100) %>% 
   ggplot(aes(x= TRAJANJE_VAKCINACIJE, y=REZULTAT_ANALIZE)) +
   geom_point() + 
   ggtitle('Korelacija rezultata analize i trajanja vakcinacije') + 
   xlab('Trajanje vakcinacije (dani)') +
   ylab('Rezultat analize')
 
-# REZULTAT_ANALIZE i RAZLIKA_ZAVRäETKA_I_BUSTERA
+# REZULTAT_ANALIZE i RAZLIKA_ZAVR≈†ETKA_I_BUSTERA
 
-cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_ZAVRäETKA_I_BUSTERA, method='pearson')
+cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_ZAVR≈†ETKA_I_BUSTERA, method='pearson')
 
 d %>%
-  filter(!is.na(RAZLIKA_ZAVRäETKA_I_BUSTERA)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% #filter(RAZLIKA_ZAVRäETKA_I_BUSTERA < 100) %>% 
-  ggplot(aes(x= RAZLIKA_ZAVRäETKA_I_BUSTERA, y=REZULTAT_ANALIZE)) +
+  filter(!is.na(RAZLIKA_ZAVR≈†ETKA_I_BUSTERA)) %>%
+  ggplot(aes(x= RAZLIKA_ZAVR≈†ETKA_I_BUSTERA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
-  ggtitle('Korelacija rezultata analize i razlike zavröetka i buster doze') + 
-  xlab('Razlika zavröetka i bustera (dani)') +
+  ggtitle('Korelacija rezultata analize i razlike zavr≈°etka i buster doze') + 
+  xlab('Razlika zavr≈°etka i bustera (dani)') +
   ylab('Rezultat analize')
 
 # REZULTAT_ANALIZE i RAZLIKA_PRIJEMA_I_UZORKOVANJA
@@ -652,13 +767,12 @@ cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_PRIJEMA_I_UZORKOVANJA, method='pearson')
 
 d %>%
   filter(!is.na(RAZLIKA_PRIJEMA_I_UZORKOVANJA)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% 
-  filter(RAZLIKA_PRIJEMA_I_UZORKOVANJA < 150) %>% 
   ggplot(aes(x= RAZLIKA_PRIJEMA_I_UZORKOVANJA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
   ggtitle('Korelacija rezultata analize i razlike prijema i uzorkovanja') + 
   xlab('Razlika prijema i uzorkovanja (dani)') +
-  ylab('Rezultat analize')
+  ylab('Rezultat analize') +
+  ylim(0, 30)
 
 # REZULTAT_ANALIZE i RAZLIKA_PRIJEMA_I_POCETKA
 
@@ -666,13 +780,12 @@ cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_PRIJEMA_I_POCETKA, method='pearson')
 
 d %>%
   filter(!is.na(RAZLIKA_PRIJEMA_I_POCETKA)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% 
-  filter(RAZLIKA_PRIJEMA_I_POCETKA < 150) %>% 
   ggplot(aes(x= RAZLIKA_PRIJEMA_I_POCETKA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
-  ggtitle('Korelacija rezultata analize i razlike prijema i poËetka') + 
-  xlab('Razlika prijema i poËetka (dani)') +
-  ylab('Rezultat analize')
+  ggtitle('Korelacija rezultata analize i razlike prijema i poƒçetka') + 
+  xlab('Razlika prijema i poƒçetka (dani)') +
+  ylab('Rezultat analize') +
+  ylim(0, 30)
 
 # REZULTAT_ANALIZE i RAZLIKA_UZORKOVANJA_I_POCETKA
 
@@ -680,13 +793,38 @@ cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_UZORKOVANJA_I_POCETKA, method='pearson')
 
 d %>%
   filter(!is.na(RAZLIKA_UZORKOVANJA_I_POCETKA)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% 
-  filter(RAZLIKA_UZORKOVANJA_I_POCETKA < 150) %>% 
   ggplot(aes(x= RAZLIKA_UZORKOVANJA_I_POCETKA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
-  ggtitle('Korelacija rezultata analize i razlike uzorkovanja i poËetka') + 
-  xlab('Razlika uzorkovanja i poËetka (dani)') +
-  ylab('Rezultat analize')
+  ggtitle('Korelacija rezultata analize i razlike uzorkovanja i poƒçetka') + 
+  xlab('Razlika uzorkovanja i poƒçetka (dani)') +
+  ylab('Rezultat analize') +
+  ylim(0, 30)
+
+# REZULTAT_ANALIZE i RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA
+
+cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA, method='pearson')
+
+d %>%
+  filter(!is.na(RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA)) %>%
+  ggplot(aes(x= RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA, y=REZULTAT_ANALIZE)) +
+  geom_point() + 
+  ggtitle('Korelacija rezultata analize i razlike zavr≈°etka vakcinacije i poƒçetka analize') + 
+  xlab('Razlika zavr≈°etka vakcinacije i poƒçetka analize (dani)') +
+  ylab('Rezultat analize') +
+  ylim(0, 30)
+
+# REZULTAT_ANALIZE i RAZLIKA_POCETKA_VAK_I_ISPITIVANJA
+
+cor.test(d$REZULTAT_ANALIZE, d$RAZLIKA_POCETKA_VAK_I_ISPITIVANJA, method='pearson')
+
+d %>%
+  filter(!is.na(RAZLIKA_POCETKA_VAK_I_ISPITIVANJA)) %>%
+  ggplot(aes(x= RAZLIKA_POCETKA_VAK_I_ISPITIVANJA, y=REZULTAT_ANALIZE)) +
+  geom_point() + 
+  ggtitle('Korelacija rezultata analize i razlike poƒçetka vakcinacije i poƒçetka analize') + 
+  xlab('Razlika poƒçetka vakcinacije i poƒçetka analize (dani)') +
+  ylab('Rezultat analize') +
+  ylim(0, 30)
 
 # REZULTAT_ANALIZE i UKUPNO_DANA_OD_VADJENJA_KRVI
 
@@ -694,25 +832,27 @@ cor.test(d$REZULTAT_ANALIZE, d$UKUPNO_DANA_OD_VADJENJA_KRVI, method='pearson')
 
 d %>%
   filter(!is.na(UKUPNO_DANA_OD_VADJENJA_KRVI)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% 
   ggplot(aes(x= UKUPNO_DANA_OD_VADJENJA_KRVI, y=REZULTAT_ANALIZE)) +
   geom_point() + 
-  ggtitle('Korelacija rezultata analize i dana protekih od vaenja krvi') + 
-  xlab('Ukupno dana od vaenja krvi') +
-  ylab('Rezultat analize')
+  ggtitle('Korelacija rezultata analize i dana protekih od vaƒëenja krvi') + 
+  xlab('Ukupno dana od vaƒëenja krvi') +
+  ylab('Rezultat analize') +
+  ylim(0, 30)
+
 
 # REZULTAT_ANALIZE i DAT_SERUM
 
-t.test(d$REZULTAT_ANALIZE ~ d$DAT_SERUM)
+wilcox.test(d$REZULTAT_ANALIZE ~ d$DAT_SERUM)
 
 d %>%
   filter(!is.na(DAT_SERUM)) %>%
-  filter(REZULTAT_ANALIZE < 10) %>% 
   ggplot(aes(x= DAT_SERUM, y=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u odnosu na pol') + 
   xlab('Dat serum') +
-  ylab('Rezultat analize')
+  ylab('Rezultat analize') +
+  ylim(0, 20)
+
 
 # REZULTAT_ANALIZE i BROJ_JEDINICA
 
@@ -720,102 +860,103 @@ cor.test(d$REZULTAT_ANALIZE, d$BROJ_JEDINICA, method='pearson')
 
 d %>%
   filter(!is.na(BROJ_JEDINICA)) %>%
-  filter(REZULTAT_ANALIZE < 15) %>% 
-  filter(BROJ_JEDINICA < 9000) %>% 
   ggplot(aes(x= BROJ_JEDINICA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
   ggtitle('Korelacija rezultata analize i broja jedinica') + 
   xlab('Broj jedinica') +
-  ylab('Rezultat analize')
+  ylab('Rezultat analize') +
+  ylim(0, 30)
 
-# REZULTAT_ANALIZE i BROJ_JEDINICA
+# REZULTAT_ANALIZE i LOKACIJA_OZLEDA
 
 kruskal.test(d$REZULTAT_ANALIZE ~ d$LOKACIJA_OZLEDA)
 
 d %>%
   filter(!is.na(LOKACIJA_OZLEDA)) %>%
-  filter(REZULTAT_ANALIZE < 7.5) %>% 
   ggplot(aes(y= LOKACIJA_OZLEDA, x=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u lokaciju ozlede') + 
   xlab('Rezultat analize') +
-  ylab('Lokacija ozlede')
+  ylab('Lokacija ozlede') +
+  xlim(0, 25)
 
 # REZULTAT_ANALIZE i BROJ_OZLEDA
 
-cor.test(d$REZULTAT_ANALIZE, as.numeric(d$BROJ_OZLEDA), method='pearson')
+cor.test(d$REZULTAT_ANALIZE, d$BROJ_OZLEDA, method='pearson')
+kruskal.test(d$REZULTAT_ANALIZE ~ d$BROJ_OZLEDA)
 
 d %>% 
   filter(!is.na(BROJ_OZLEDA)) %>%
-  #filter(REZULTAT_ANALIZE < 15) %>% 
-  #filter(BROJ_OZLEDA < 9000) %>% 
   ggplot(aes(x= BROJ_OZLEDA, y=REZULTAT_ANALIZE)) +
   geom_point() + 
   ggtitle('Korelacija rezultata analize i broja jedinica') + 
   xlab('Broj jedinica') +
   ylab('Rezultat analize')
 
-# REZULTAT_ANALIZE i éIVOTINJA
+# REZULTAT_ANALIZE i ≈ΩIVOTINJA
 
-kruskal.test(d$REZULTAT_ANALIZE ~ d$éIVOTINJA)
+kruskal.test(d$REZULTAT_ANALIZE ~ d$≈ΩIVOTINJA)
 
 d %>%
-  filter(!is.na(éIVOTINJA)) %>%
-  filter(REZULTAT_ANALIZE < 25) %>% 
-  ggplot(aes(y= éIVOTINJA, x=REZULTAT_ANALIZE)) +
-  geom_boxplot() + 
+  filter(!is.na(≈ΩIVOTINJA)) %>%
+  ggplot(aes(y= ≈ΩIVOTINJA, x=REZULTAT_ANALIZE)) +
+  geom_boxplot(outlier.shape = NA) + 
   ggtitle('Rezultat analize u lokaciju ozlede') + 
-  xlab('Rezultat analize') +
+  xlab('Rezultat analize') + xlim(0, 25) +
   ylab('Lokacija ozlede')
 
 
+# Analiza rizika za varijablu USPESNO_IMUNIZOVAN
 
-"""
-d %>% 
-  filter(!d$REZULTAT_ANALIZE %in% boxplot.stats(d$REZULTAT_ANALIZE)$out == TRUE) %>% 
-  filter(!d$BROJ_OZLEDA %in% boxplot.stats(d$BROJ_OZLEDA)$out == TRUE) %>% 
-  cor.test(REZULTAT_ANALIZE, as.numeric(d$BROJ_OZLEDA), method='pearson')
-  
-  # REZULTAT_ANALIZE i BROJ_OZLEDA
-  
-  cor.test(d$REZULTAT_ANALIZE, as.numeric(d$BROJ_OZLEDA), method='pearson')
+# Provera klase varijabli pre pocetka analize
 
-d %>% 
-  filter(!is.na(BROJ_OZLEDA)) %>%
-  #filter(REZULTAT_ANALIZE < 15) %>% 
-  #filter(BROJ_OZLEDA < 9000) %>% 
-  ggplot(aes(x= BROJ_OZLEDA, y=REZULTAT_ANALIZE)) +
-  geom_point() + 
-  ggtitle('Korelacija rezultata analize i broja jedinica') + 
-  xlab('Broj jedinica') +
-  ylab('Rezultat analize')
-"""
+lapply(d, class)
 
-remove_outliers <- function(x, na.rm = TRUE, ...) {
-  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
-  H <- 1.5 * IQR(x, na.rm = na.rm)
-  y <- x
-  y[x < (qnt[1] - H)] <- NA
-  y[x > (qnt[2] + H)] <- NA
-  y
-}
+#Izmena klase potrebnih varijali
+d$POL <- as.factor(d$POL)
+d$USPESNO_IMUNIZOVAN <- as.factor(d$USPESNO_IMUNIZOVAN)
+d$GODINA <- as.factor(d$GODINA)
+d$MESTO_PACIJENTA <- as.factor(d$MESTO_PACIJENTA)
+d$USTANOVA_POSILJALAC_UZORKA <- as.factor(d$USTANOVA_POSILJALAC_UZORKA)
+d$DAT_SERUM <- as.factor(d$DAT_SERUM)
+d$LOKACIJA_OZLEDA <- as.factor(d$LOKACIJA_OZLEDA)
+d$≈ΩIVOTINJA <- as.factor(d$≈ΩIVOTINJA)
 
-remove_outliers(d$REZULTAT_ANALIZE)
-  cor.test(d$REZULTAT_ANALIZE, as.numeric(d$BROJ_OZLEDA), method='pearson')
+#Vizualizacija korelacija varijabli razlike radi potencijalnog izbacivanja zbog
+# multikolinearnosti
 
-cor.test(remove_outliers(d$REZULTAT_ANALIZE), remove_outliers(as.numeric(d$BROJ_OZLEDA)), method='pearson')
+install.packages('PerformanceAnalytics')
+library(PerformanceAnalytics)
+x <- select(d, contains('RAZLIKA'))
+chart.Correlation(x)
 
-d %>% 
-  filter(!is.na(BROJ_OZLEDA)) %>%
-  #filter(REZULTAT_ANALIZE < 15) %>% 
-  #filter(BROJ_OZLEDA < 9000) %>% 
-  ggplot(aes(x= BROJ_OZLEDA, y=REZULTAT_ANALIZE)) +
-  geom_point() + 
-  ggtitle('Korelacija rezultata analize i broja jedinica') + 
-  xlab('Broj jedinica') +
-  ylab('Rezultat analize')
+#Pravljenje i optimizovanje modela Logisticke regresije
 
-# REZULTAT_ANALIZE i éIVOTINJA
+#Prvi model
+model1 <- glm(USPESNO_IMUNIZOVAN ~ POL+ GODINA_ROƒêENJA +  
+             USTANOVA_POSILJALAC_UZORKA + TRAJANJE_VAKCINACIJE + 
+             RAZLIKA_ZAVRSETKA_VAK_I_POCETKA_ANA + RAZLIKA_PRIJEMA_I_POCETKA + 
+             RAZLIKA_UZORKOVANJA_I_POCETKA + UKUPNO_DANA_OD_VADJENJA_KRVI +
+             BROJ_JEDINICA + LOKACIJA_OZLEDA + ≈ΩIVOTINJA + BROJ_OZLEDA
+             ,family = binomial(link = "logit"), data=d)
+summary(model1)
 
-kruskal.test(d$REZULTAT_ANALIZE ~ d$éIVOTINJA)
+#Model nakon uklanjanja neznacajnih varijabli
+model2 <- glm(USPESNO_IMUNIZOVAN ~ GODINA_ROƒêENJA +  
+               USTANOVA_POSILJALAC_UZORKA + 
+               RAZLIKA_PRIJEMA_I_POCETKA + 
+               BROJ_JEDINICA
+             ,family = binomial(link = "logit"), data=d)
+summary(model2)
 
+#Naredno uklanjanje neznacajnih varijabli
+model3 <- glm(USPESNO_IMUNIZOVAN ~ GODINA_ROƒêENJA +  
+               USTANOVA_POSILJALAC_UZORKA
+             ,family = binomial(link = "logit"), data=d)
+
+summary(model3)
+
+
+
+
+       

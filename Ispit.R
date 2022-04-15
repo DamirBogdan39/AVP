@@ -848,7 +848,7 @@ d %>%
   filter(!is.na(DAT_SERUM)) %>%
   ggplot(aes(x= DAT_SERUM, y=REZULTAT_ANALIZE)) +
   geom_boxplot(outlier.shape = NA) + 
-  ggtitle('Rezultat analize u odnosu na pol') + 
+  ggtitle('Rezultat analize u odnosu na davanje seruma') + 
   xlab('Dat serum') +
   ylab('Rezultat analize') +
   ylim(0, 20)
@@ -901,7 +901,7 @@ d %>%
   filter(!is.na(ŽIVOTINJA)) %>%
   ggplot(aes(y= ŽIVOTINJA, x=REZULTAT_ANALIZE)) +
   geom_boxplot(outlier.shape = NA) + 
-  ggtitle('Rezultat analize u lokaciju ozlede') + 
+  ggtitle('Rezultat analize u odnosu na lokaciju ozlede') + 
   xlab('Rezultat analize') + xlim(0, 25) +
   ylab('Lokacija ozlede')
 
@@ -953,10 +953,76 @@ summary(model2)
 model3 <- glm(USPESNO_IMUNIZOVAN ~ GODINA_ROĐENJA +  
                USTANOVA_POSILJALAC_UZORKA
              ,family = binomial(link = "logit"), data=d)
-
 summary(model3)
 
+#Odredjivanje metrike modela
 
+library(caret)
 
+set.seed(123)
+train.indices <- createDataPartition(d$USPESNO_IMUNIZOVAN, p=0.8, list = FALSE)
+train.indices
 
-       
+traindata <- d[train.indices,]
+testdata <- d[-train.indices,]
+traindata$USPESNO_IMUNIZOVAN <- as.character(traindata$USPESNO_IMUNIZOVAN)
+traindata$USPESNO_IMUNIZOVAN <- replace(traindata$USPESNO_IMUNIZOVAN, 
+                                which(traindata$USPESNO_IMUNIZOVAN == "DA"), 1)
+traindata$USPESNO_IMUNIZOVAN <- replace(traindata$USPESNO_IMUNIZOVAN, 
+                                which(traindata$USPESNO_IMUNIZOVAN == "NE"), 0)
+traindata$USPESNO_IMUNIZOVAN <- as.numeric(traindata$USPESNO_IMUNIZOVAN)
+traindata$USPESNO_IMUNIZOVAN
+
+testdata$USPESNO_IMUNIZOVAN <- as.character(testdata$USPESNO_IMUNIZOVAN)
+testdata$USPESNO_IMUNIZOVAN <- replace(testdata$USPESNO_IMUNIZOVAN, 
+                               which(testdata$USPESNO_IMUNIZOVAN == "DA"), 1)
+testdata$USPESNO_IMUNIZOVAN <- replace(testdata$USPESNO_IMUNIZOVAN, 
+                               which(testdata$USPESNO_IMUNIZOVAN == "NE"), 0)
+testdata$USPESNO_IMUNIZOVAN <- as.numeric(testdata$USPESNO_IMUNIZOVAN)
+testdata$USPESNO_IMUNIZOVAN
+
+# Funckija compute.eval.metrics za racunanje metrike predikcije logisticke
+# regresije
+
+compute.eval.metrics <- function(cm) {
+  TP <- cm[2,2]
+  TN <- cm[1,1]
+  FP <- cm[1,2]
+  FN <- cm[2,1]
+  acc <- (TP + TN) / (TP + TN + FP + FN)
+  prec <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  f1 <- 2 * (prec * recall) / (prec + recall)
+  c(accuracy = acc, precision = prec, recall = recall, f1 = f1)
+}
+
+#Racunanje metrike modela
+
+model3 <- glm(USPESNO_IMUNIZOVAN ~ GODINA_ROĐENJA + USTANOVA_POSILJALAC_UZORKA
+              ,family = binomial(link = "logit"), data=traindata)
+summary(model3)
+
+model3predict <- predict(model3, newdata = testdata)
+model3predict <- ifelse(model3predict > 0.5,1,0)
+model3predict
+
+model3.cm <- table(prave.vrednosti=testdata$USPESNO_IMUNIZOVAN,
+                   predvidjene.vrednosti=model3predict)
+model3.cm 
+compute.eval.metrics(model3.cm)
+
+#Poboljsavanje modela i konacno racuanje metrike
+
+model3 <- glm(USPESNO_IMUNIZOVAN ~ GODINA_ROĐENJA
+              ,family = binomial(link = "logit"), data=traindata)
+summary(model3)
+
+model3predict <- predict(model3, newdata = testdata)
+model3predict <- ifelse(model3predict > 0.5,1,0)
+model3predict
+
+model3.cm <- table(prave.vrednosti=testdata$USPESNO_IMUNIZOVAN,
+                   predvidjene.vrednosti=model3predict)
+model3.cm 
+compute.eval.metrics(model3.cm)
+
